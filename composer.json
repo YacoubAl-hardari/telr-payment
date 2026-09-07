@@ -1,0 +1,43 @@
+{
+    "name": "yacoubalhaidari/telr-laravel",
+    "description": "Laravel package for the Telr Payment Gateway: Hosted Payment Page, QuickLinks, Invoicing, Repeat Billing Agreements, Webhooks, and the Service API.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["laravel", "telr", "payment", "gateway", "quicklink", "invoice", "webhook"],
+    "require": {
+        "php": "^8.1",
+        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/http": "^10.0|^11.0|^12.0",
+        "ext-simplexml": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
+        "phpunit/phpunit": "^13.1.10"
+    },
+    "autoload": {
+        "psr-4": {
+            "yacoubalhaidari\\Telr\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "yacoubalhaidari\\Telr\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "yacoubalhaidari\\Telr\\TelrServiceProvider"
+            ],
+            "aliases": {
+                "Telr": "yacoubalhaidari\\Telr\\Facades\\Telr"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "test": "vendor/bin/phpunit"
+    }
+}
