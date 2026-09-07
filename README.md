@@ -1,4 +1,6 @@
 # Telr Laravel
+<img width="3398" height="1222" alt="telr laravel paymwnt" src="https://github.com/user-attachments/assets/5f57dbcd-f676-456e-8dd5-bbdce6e73c27" />
+
 
 Laravel package for the [Telr](https://telr.com) Payment Gateway: Hosted Payment Page, QuickLinks, Remote Invoicing, Repeat Billing Agreements, Webhooks, and the Service API — built directly against Telr's published API documentation.
 
