@@ -54,17 +54,34 @@ class CreateOrderDTOTest extends TestCase
         );
     }
 
-    public function test_it_hides_customer_data_when_invoice_data_is_disabled(): void
+    public function test_it_hides_auth_fallback_when_invoice_data_is_disabled(): void
     {
         config(['telr.show_invoice_data' => false]);
 
         $dto = new CreateOrderDTO(
             order: new OrderDetailsDTO('1', '10.50', Currency::AED, 'desc'),
             return: new ReturnUrlsDTO('https://a', 'https://b', 'https://c'),
-            customer: new CustomerDTO(email: 'buyer@example.test'),
         );
 
         $this->assertArrayNotHasKey('customer', $dto->toArray('1234', 'key'));
+    }
+
+    public function test_it_always_sends_explicit_customer_data(): void
+    {
+        config(['telr.show_invoice_data' => false]);
+
+        $dto = new CreateOrderDTO(
+            order: new OrderDetailsDTO('1', '10.50', Currency::AED, 'desc'),
+            return: new ReturnUrlsDTO('https://a', 'https://b', 'https://c'),
+            customer: CustomerDTO::fromContact('Buyer Example', 'buyer@example.test', '0500000000'),
+        );
+
+        $customer = $dto->toArray('1234', 'key')['customer'];
+
+        $this->assertSame('buyer@example.test', $customer['email']);
+        $this->assertSame('Buyer', $customer['name']['forenames']);
+        $this->assertSame('Example', $customer['name']['surname']);
+        $this->assertSame('0500000000', $customer['phone']);
     }
 
     public function test_it_prefills_customer_data_from_the_authenticated_user_when_enabled(): void

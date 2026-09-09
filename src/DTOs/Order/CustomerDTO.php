@@ -22,6 +22,36 @@ final class CustomerDTO extends BaseDTO
     ) {
     }
 
+    /**
+     * Build a billing block from a full name, email, and optional phone.
+     * Use this when the payer is a customer or merchant record in your app.
+     */
+    public static function fromContact(
+        ?string $fullName,
+        ?string $email = null,
+        ?string $phone = null,
+        ?CustomerAddressDTO $address = null,
+        ?string $ref = null,
+    ): self {
+        $fullName = trim((string) $fullName);
+        $forenames = 'Customer';
+        $surname = '';
+
+        if ($fullName !== '') {
+            $parts = preg_split('/\s+/u', $fullName, 2) ?: [];
+            $forenames = $parts[0] !== '' ? $parts[0] : 'Customer';
+            $surname = $parts[1] ?? '';
+        }
+
+        return new self(
+            email: is_string($email) && trim($email) !== '' ? trim($email) : null,
+            name: new CustomerNameDTO($forenames, $surname),
+            address: $address,
+            phone: is_string($phone) && trim($phone) !== '' ? trim($phone) : null,
+            ref: $ref,
+        );
+    }
+
     public static function fromAuthenticatedUser(): ?self
     {
         if (!function_exists('auth') || !($user = auth()->user())) {
@@ -33,7 +63,7 @@ final class CustomerDTO extends BaseDTO
         $surname = (string) data_get($user, 'last_name', '');
 
         if ($forenames === '' && $surname === '' && $fullName !== '') {
-            $nameParts = preg_split('/\s+/', $fullName, 2) ?: [];
+            $nameParts = preg_split('/\s+/u', $fullName, 2) ?: [];
             $forenames = $nameParts[0] ?? '';
             $surname = $nameParts[1] ?? '';
         }

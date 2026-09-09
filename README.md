@@ -53,6 +53,7 @@ TELR_RETURN_DECLINED=https://yourapp.com/checkout/declined
 TELR_RETURN_CANCELLED=https://yourapp.com/checkout/cancelled
 
 TELR_WEBHOOK_PATH=webhooks/telr
+TELR_REGISTER_RETURN_ROUTE=false
 
 TELR_SERVICE_API_MERCHANT_ID=
 TELR_SERVICE_API_KEY=
@@ -73,20 +74,36 @@ the optional `tran_order` signature field when enabled for your store and works
 with form data already decoded by PHP. Do not URL-decode the request a second
 time. See [Telr's signature specification](https://docs.telr.com/reference/webhook).
 
-`TELR_SHOW_INVOICE_DATA` controls whether customer/invoice fields are sent to
-the Hosted Payment Page. It defaults to `false`, so Telr will not display or
-request those fields from the customer. Set it to `true` when you want to
-pre-fill them from your application:
+`TELR_SHOW_INVOICE_DATA` controls the **authenticated-user fallback** only.
+When you pass `customer:` to `CreateOrderDTO`, that billing block is **always**
+sent to the Hosted Payment Page so name and email can be pre-filled while the
+customer still enters card details manually. Set the flag to `true` when you
+want the package to build customer data from `auth()->user()` automatically:
 
 ```env
 TELR_SHOW_INVOICE_DATA=true
 ```
 
-When enabled, pass `customer:` to `CreateOrderDTO` if you already have a
-custom customer source. If it is omitted, the package automatically uses the
-authenticated user's `name`, `first_name`, `last_name`, `email`, `phone`,
-`country_code`/`country`, and address fields when available. The customer only
-completes any fields that are still missing on Telr's page.
+Prefer an explicit customer from your domain model (order customer, merchant /
+join request, subscription owner):
+
+```php
+use yacoubalhaidari\Telr\DTOs\Order\CustomerDTO;
+
+$customer = CustomerDTO::fromContact(
+    fullName: $order->customer_name,
+    email: $order->customer_email,
+    phone: $order->customer_phone,
+);
+
+$response = Telr::createOrder(new CreateOrderDTO(
+    order: new OrderDetailsDTO(...),
+    return: new ReturnUrlsDTO(...),
+    customer: $customer,
+));
+```
+
+Incomplete fields simply remain editable on Telr's page.
 
 ## Usage
 
@@ -200,7 +217,26 @@ $failed = Telr::agreements()->failed('2026-08-01', '2026-08-31');
 $cancelled = Telr::agreements()->cancelled('2026-07-01', '2026-08-31');
 ```
 
-### 5. Webhooks
+### 5. Browser return + Webhooks
+
+**Browser return (recommended application pattern)**
+
+Create the Telr order with one signed, payment-specific return URL for
+authorised, declined, and cancelled outcomes. On return, reload the local
+payment attempt and call `Telr::checkOrderStatus($savedOrderReference)`.
+Only `OrderStatus::PAID` with a matching cart, amount, currency, and test mode
+should deliver the service. YacoubAlHaidari.com's `TelrPaymentController` follows this
+pattern.
+
+Optionally enable the package's static return controller when you use
+`TELR_RETURN_*` URLs instead of a payment-specific route:
+
+```env
+TELR_REGISTER_RETURN_ROUTE=true
+TELR_RETURN_PATH=payments/telr/return/{ref?}
+```
+
+**Transaction advice webhooks**
 
 Listen for the typed events dispatched by the built-in webhook controller:
 

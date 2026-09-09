@@ -54,8 +54,9 @@ return [
     |--------------------------------------------------------------------------
     | Hosted Payment Page customer / invoice data
     |--------------------------------------------------------------------------
-    | When enabled, customer data is pre-filled from the authenticated user
-    | or from CreateOrderDTO::customer. When disabled, it is never sent.
+    | Explicit CreateOrderDTO::$customer is always sent to Telr so billing
+    | name/email can be pre-filled. When show_invoice_data is true and no
+    | customer is passed, the package falls back to the authenticated user.
     */
     'show_invoice_data' => filter_var(env('TELR_SHOW_INVOICE_DATA', false), FILTER_VALIDATE_BOOLEAN),
 
@@ -69,6 +70,17 @@ return [
         'declined' => env('TELR_RETURN_DECLINED'),
         'cancelled' => env('TELR_RETURN_CANCELLED'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Optional package browser-return route
+    |--------------------------------------------------------------------------
+    | Prefer a signed payment-specific application route that reconciles a
+    | local payment record. Enable this only when using the package's static
+    | TelrHostedPaymentReturnController with return_urls above.
+    */
+    'register_return_route' => filter_var(env('TELR_REGISTER_RETURN_ROUTE', false), FILTER_VALIDATE_BOOLEAN),
+    'return_path' => env('TELR_RETURN_PATH', 'payments/telr/return/{ref?}'),
 
     /*
     |--------------------------------------------------------------------------

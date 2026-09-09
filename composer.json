@@ -37,6 +37,7 @@
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
+    "version": "1.0.3",
     "scripts": {
         "test": "@php vendor/bin/phpunit"
     }

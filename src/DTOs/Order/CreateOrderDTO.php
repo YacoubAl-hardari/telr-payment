@@ -36,9 +36,10 @@ final class CreateOrderDTO extends AuthenticatedRequestDTO
 
     public function toArray(string $store, string $authKey): array
     {
-        $customer = config('telr.show_invoice_data', false)
-            ? ($this->customer ?? CustomerDTO::fromAuthenticatedUser())
-            : null;
+        // Explicit customer data always pre-fills the Hosted Payment Page.
+        // Auth-user fallback only runs when show_invoice_data is enabled and no customer was passed.
+        $customer = $this->customer
+            ?? (config('telr.show_invoice_data', false) ? CustomerDTO::fromAuthenticatedUser() : null);
 
         return self::filter([
             'method' => 'create',
