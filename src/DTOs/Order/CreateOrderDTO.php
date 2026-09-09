@@ -36,6 +36,10 @@ final class CreateOrderDTO extends AuthenticatedRequestDTO
 
     public function toArray(string $store, string $authKey): array
     {
+        $customer = config('telr.show_invoice_data', false)
+            ? ($this->customer ?? CustomerDTO::fromAuthenticatedUser())
+            : null;
+
         return self::filter([
             'method' => 'create',
             'store' => $store,
@@ -43,7 +47,7 @@ final class CreateOrderDTO extends AuthenticatedRequestDTO
             'framed' => $this->framed->value,
             'order' => $this->order->toArray(),
             'return' => $this->return->toArray(),
-            'customer' => $this->customer?->toArray(),
+            'customer' => $customer?->toArray(),
             'panels' => $this->panels,
             'webhooks' => array_map(fn (WebhookUrlDTO $w) => $w->toArray(), $this->webhooks),
             'extra' => $this->extra,

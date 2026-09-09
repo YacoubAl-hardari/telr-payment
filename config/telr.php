@@ -52,6 +52,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hosted Payment Page customer / invoice data
+    |--------------------------------------------------------------------------
+    | When enabled, customer data is pre-filled from the authenticated user
+    | or from CreateOrderDTO::customer. When disabled, it is never sent.
+    */
+    'show_invoice_data' => filter_var(env('TELR_SHOW_INVOICE_DATA', false), FILTER_VALIDATE_BOOLEAN),
+
+    /*
+    |--------------------------------------------------------------------------
     | Default return URLs for order.json / Hosted Payment Page
     |--------------------------------------------------------------------------
     */

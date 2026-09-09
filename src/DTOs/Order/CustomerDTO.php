@@ -22,6 +22,40 @@ final class CustomerDTO extends BaseDTO
     ) {
     }
 
+    public static function fromAuthenticatedUser(): ?self
+    {
+        if (!function_exists('auth') || !($user = auth()->user())) {
+            return null;
+        }
+
+        $fullName = trim((string) data_get($user, 'name', ''));
+        $forenames = (string) data_get($user, 'first_name', '');
+        $surname = (string) data_get($user, 'last_name', '');
+
+        if ($forenames === '' && $surname === '' && $fullName !== '') {
+            $nameParts = preg_split('/\s+/', $fullName, 2) ?: [];
+            $forenames = $nameParts[0] ?? '';
+            $surname = $nameParts[1] ?? '';
+        }
+
+        $name = $forenames !== '' || $surname !== ''
+            ? new CustomerNameDTO($forenames, $surname)
+            : null;
+
+        $address = new CustomerAddressDTO(
+            line1: data_get($user, 'address.line1', data_get($user, 'address_line1')),
+            city: data_get($user, 'address.city', data_get($user, 'city')),
+            country: data_get($user, 'country_code', data_get($user, 'country')),
+        );
+
+        return new self(
+            email: data_get($user, 'email'),
+            name: $name,
+            address: $address->toArray() === [] ? null : $address,
+            phone: data_get($user, 'phone'),
+        );
+    }
+
     public function toArray(): array
     {
         return self::filter([

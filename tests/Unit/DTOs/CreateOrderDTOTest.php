@@ -2,7 +2,10 @@
 
 namespace yacoubalhaidari\Telr\Tests\Unit\DTOs;
 
+use Illuminate\Auth\GenericUser;
 use yacoubalhaidari\Telr\DTOs\Order\CreateOrderDTO;
+use yacoubalhaidari\Telr\DTOs\Order\CustomerDTO;
+use yacoubalhaidari\Telr\DTOs\Order\CustomerNameDTO;
 use yacoubalhaidari\Telr\DTOs\Order\OrderDetailsDTO;
 use yacoubalhaidari\Telr\DTOs\Order\ReturnUrlsDTO;
 use yacoubalhaidari\Telr\Enums\Currency;
@@ -49,6 +52,60 @@ class CreateOrderDTOTest extends TestCase
             currency: Currency::AED,
             description: str_repeat('a', 64),
         );
+    }
+
+    public function test_it_hides_customer_data_when_invoice_data_is_disabled(): void
+    {
+        config(['telr.show_invoice_data' => false]);
+
+        $dto = new CreateOrderDTO(
+            order: new OrderDetailsDTO('1', '10.50', Currency::AED, 'desc'),
+            return: new ReturnUrlsDTO('https://a', 'https://b', 'https://c'),
+            customer: new CustomerDTO(email: 'buyer@example.test'),
+        );
+
+        $this->assertArrayNotHasKey('customer', $dto->toArray('1234', 'key'));
+    }
+
+    public function test_it_prefills_customer_data_from_the_authenticated_user_when_enabled(): void
+    {
+        config(['telr.show_invoice_data' => true]);
+        $this->be(new GenericUser([
+            'name' => 'Jane Doe',
+            'email' => 'jane@example.test',
+            'country_code' => 'AE',
+        ]));
+
+        $dto = new CreateOrderDTO(
+            order: new OrderDetailsDTO('1', '10.50', Currency::AED, 'desc'),
+            return: new ReturnUrlsDTO('https://a', 'https://b', 'https://c'),
+        );
+
+        $customer = $dto->toArray('1234', 'key')['customer'];
+
+        $this->assertSame('jane@example.test', $customer['email']);
+        $this->assertSame('Jane', $customer['name']['forenames']);
+        $this->assertSame('Doe', $customer['name']['surname']);
+        $this->assertSame('AE', $customer['address']['country']);
+    }
+
+    public function test_it_sends_explicit_customer_data_when_invoice_data_is_enabled(): void
+    {
+        config(['telr.show_invoice_data' => true]);
+
+        $dto = new CreateOrderDTO(
+            order: new OrderDetailsDTO('1', '10.50', Currency::AED, 'desc'),
+            return: new ReturnUrlsDTO('https://a', 'https://b', 'https://c'),
+            customer: new CustomerDTO(
+                email: 'buyer@example.test',
+                name: new CustomerNameDTO('Buyer', 'Example'),
+            ),
+        );
+
+        $customer = $dto->toArray('1234', 'key')['customer'];
+
+        $this->assertSame('buyer@example.test', $customer['email']);
+        $this->assertSame('Buyer', $customer['name']['forenames']);
     }
 
     public function test_it_rejects_more_than_two_webhooks(): void

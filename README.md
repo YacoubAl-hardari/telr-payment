@@ -46,6 +46,7 @@ TELR_SECRET_KEY=your-webhook-secret-key
 TELR_INVOICE_PASSWORD=your-remote-invoice-password
 TELR_BASE_URL=https://secure.telr.com
 TELR_TEST_MODE=true
+TELR_SHOW_INVOICE_DATA=false
 
 TELR_RETURN_AUTHORISED=https://yourapp.com/checkout/authorised
 TELR_RETURN_DECLINED=https://yourapp.com/checkout/declined
@@ -71,6 +72,21 @@ Transaction advice must use a nonempty `TELR_SECRET_KEY`. The verifier accepts
 the optional `tran_order` signature field when enabled for your store and works
 with form data already decoded by PHP. Do not URL-decode the request a second
 time. See [Telr's signature specification](https://docs.telr.com/reference/webhook).
+
+`TELR_SHOW_INVOICE_DATA` controls whether customer/invoice fields are sent to
+the Hosted Payment Page. It defaults to `false`, so Telr will not display or
+request those fields from the customer. Set it to `true` when you want to
+pre-fill them from your application:
+
+```env
+TELR_SHOW_INVOICE_DATA=true
+```
+
+When enabled, pass `customer:` to `CreateOrderDTO` if you already have a
+custom customer source. If it is omitted, the package automatically uses the
+authenticated user's `name`, `first_name`, `last_name`, `email`, `phone`,
+`country_code`/`country`, and address fields when available. The customer only
+completes any fields that are still missing on Telr's page.
 
 ## Usage
 

@@ -7,9 +7,9 @@ use yacoubalhaidari\Telr\DTOs\BaseDTO;
 final class CustomerAddressDTO extends BaseDTO
 {
     public function __construct(
-        public readonly string $line1,
-        public readonly string $city,
-        public readonly string $country, // 2-letter ISO code
+        public readonly ?string $line1 = null,
+        public readonly ?string $city = null,
+        public readonly ?string $country = null, // 2-letter ISO code
         public readonly ?string $line2 = null,
         public readonly ?string $line3 = null,
         public readonly ?string $state = null,
