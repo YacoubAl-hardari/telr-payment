@@ -37,6 +37,11 @@
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
+    "config": {
+        "audit": {
+            "block-insecure": false
+        }
+    },
     "scripts": {
         "test": "@php vendor/bin/phpunit"
     }

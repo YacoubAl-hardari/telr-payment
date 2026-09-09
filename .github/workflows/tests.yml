@@ -37,6 +37,8 @@ jobs:
           tools: composer:v2
       - name: Select framework test environment
         run: composer require --dev "orchestra/testbench:${{ matrix.testbench }}" "phpunit/phpunit:${{ matrix.phpunit }}" --no-update --no-interaction
+      # Composer 2.9+ blocks Laravel 10/11 installs that still have advisories;
+      # keep testing those supported majors for package consumers.
       - run: composer update --prefer-dist --no-interaction --no-progress
       - run: composer validate --strict
       - run: composer test
