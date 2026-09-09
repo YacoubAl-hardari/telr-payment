@@ -1,6 +1,6 @@
 # Telr Laravel
-<img width="100%" height="100%" alt="telr laravel paymwnt" src="https://github.com/user-attachments/assets/5f57dbcd-f676-456e-8dd5-bbdce6e73c27" />
 
+<img width="100%" height="100%" alt="telr laravel paymwnt" src="https://github.com/user-attachments/assets/5f57dbcd-f676-456e-8dd5-bbdce6e73c27" />
 
 Laravel package for the [Telr](https://telr.com) Payment Gateway: Hosted Payment Page, QuickLinks, Remote Invoicing, Repeat Billing Agreements, Webhooks, and the Service API — built directly against Telr's published API documentation.
 
@@ -237,6 +237,52 @@ use yacoubalhaidari\Telr\Facades\Telr;
 $xml = Telr::serviceApi()->transaction('011287290362');
 $accounts = Telr::serviceApi()->accounts(); // JSON, unlike every other Service API endpoint
 ```
+
+## Test Cards
+
+> [!IMPORTANT]
+> These cards are for **test mode only** and will not work for live transactions.
+> Use CVV `123` for an authorised response, except American Express, which uses
+> `1234`. Any other CVV returns a declined response.
+
+Use the cards below to exercise hosted payment page integrations. Cards marked
+with **3DS** open Telr's simulated 3D Secure authentication page.
+
+| Card number           | Type             |    CVV | 3DS |
+| --------------------- | ---------------- | -----: | :-: |
+| `4000 0000 0000 0002` | Visa             |  `123` | No  |
+| `4111 1111 1111 1111` | Visa             |  `123` | Yes |
+| `4444 3333 2222 1111` | Visa             |  `123` | Yes |
+| `4444 4244 4444 4440` | Visa             |  `123` | Yes |
+| `4444 4444 4444 4448` | Visa             |  `123` | Yes |
+| `4012 8888 8888 1881` | Visa             |  `123` | Yes |
+| `5105 1051 0510 5100` | Mastercard       |  `123` | No  |
+| `5454 5454 5454 5454` | Mastercard       |  `123` | Yes |
+| `5555 5555 5555 4444` | Mastercard       |  `123` | Yes |
+| `5555 5555 5555 5557` | Mastercard       |  `123` | Yes |
+| `5581 5822 2222 2229` | Mastercard       |  `123` | Yes |
+| `5641 8209 0009 7002` | Maestro UK       |  `123` | Yes |
+| `3714 496353 98431`   | American Express | `1234` | No  |
+| `3714 4963 5398 431`  | American Express | `1234` | No  |
+| `3434 3434 3434 343`  | American Express | `1234` | No  |
+| `3566 0020 2014 0006` | JCB              |  `123` | No  |
+| `4464 0400 0000 0007` | MADA             |  `123` | Yes |
+
+### Simulate Declines and Errors
+
+In test mode, pad a Telr transaction response code with a leading `0` to make
+it a three-digit CVV. For example, use `041` to simulate **Insufficient Funds**
+(`D`, response code `41`).
+
+To simulate an on-hold transaction, use CVV `999`. The transaction is
+authorised but held for anti-fraud inspection; no funds are debited until the
+transaction is accepted in the Merchant Administration System.
+
+For remote invoice or other remote transaction decline simulations, contact
+[Telr Support](mailto:support@telr.com).
+
+See the [official Telr test card documentation](https://docs.telr.com/reference/test-cards)
+for the full response-code reference.
 
 ## Testing
 
