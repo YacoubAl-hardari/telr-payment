@@ -38,8 +38,7 @@ final class CreateOrderDTO extends AuthenticatedRequestDTO
     {
         // Explicit customer data always pre-fills the Hosted Payment Page.
         // Auth-user fallback only runs when show_invoice_data is enabled and no customer was passed.
-        $customer = $this->customer
-            ?? (config('telr.show_invoice_data', false) ? CustomerDTO::fromAuthenticatedUser() : null);
+        $customer = $this->customer ?? self::resolveDefaultCustomer();
 
         return self::filter([
             'method' => 'create',
@@ -53,5 +52,18 @@ final class CreateOrderDTO extends AuthenticatedRequestDTO
             'webhooks' => array_map(fn (WebhookUrlDTO $w) => $w->toArray(), $this->webhooks),
             'extra' => $this->extra,
         ]);
+    }
+
+    private static function resolveDefaultCustomer(): ?CustomerDTO
+    {
+        if (! function_exists('config') || ! function_exists('app') || ! app()->bound('config')) {
+            return null;
+        }
+
+        if (! config('telr.show_invoice_data', false)) {
+            return null;
+        }
+
+        return CustomerDTO::fromAuthenticatedUser();
     }
 }
