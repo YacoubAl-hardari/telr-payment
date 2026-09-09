@@ -6,11 +6,21 @@ Laravel package for the [Telr](https://telr.com) Payment Gateway: Hosted Payment
 
 ## Installation
 
+Supports Laravel 10, 11, 12, and 13. PHP 8.1 or newer is required by this
+package; Laravel 13 requires PHP 8.3 or newer. Use the PHP version supported by
+your selected Laravel release.
+
 ```bash
 composer require yacoubalhaidari/telr-laravel
 ```
 
 Laravel's package auto-discovery will register `TelrServiceProvider` and the `Telr` facade automatically.
+
+Laravel 13 is supported by both Illuminate dependency constraints. No vendor
+edits or application-side DTO patches are needed. Authenticated request DTOs
+(`CreateOrderDTO`, `CreateQuickLinkDTO`, and `CreateInvoiceDTO`) extend
+`AuthenticatedRequestDTO`; nested DTOs extend `BaseDTO`. Existing
+`toArray(store, credential)` signatures, including named arguments, are preserved.
 
 Publish the config file:
 
@@ -56,6 +66,11 @@ https://yourapp.com/webhooks/telr
 (or whatever `TELR_WEBHOOK_PATH` you set).
 
 > The webhook route is registered without the `web` middleware group since it's a direct server-to-server POST. If your app's `VerifyCsrfToken` middleware is applied globally elsewhere, add the path to its `$except` array as well.
+
+Transaction advice must use a nonempty `TELR_SECRET_KEY`. The verifier accepts
+the optional `tran_order` signature field when enabled for your store and works
+with form data already decoded by PHP. Do not URL-decode the request a second
+time. See [Telr's signature specification](https://docs.telr.com/reference/webhook).
 
 ## Usage
 
@@ -177,10 +192,10 @@ Listen for the typed events dispatched by the built-in webhook controller:
 // EventServiceProvider
 protected $listen = [
     \yacoubalhaidari\Telr\Events\TelrTransactionAuthorised::class => [
-        \App\Listeners\MarkOrderAsPaid::class,
+        \App\Listeners\ReconcileOrderPayment::class,
     ],
     \yacoubalhaidari\Telr\Events\TelrTransactionDeclined::class => [
-        \App\Listeners\MarkOrderAsFailed::class,
+        \App\Listeners\ReconcileOrderPayment::class,
     ],
     \yacoubalhaidari\Telr\Events\TelrAgreementCancelled::class => [
         \App\Listeners\HandleSubscriptionCancellation::class,
@@ -192,15 +207,27 @@ protected $listen = [
 ```
 
 ```php
-class MarkOrderAsPaid
+class ReconcileOrderPayment
 {
-    public function handle(\yacoubalhaidari\Telr\Events\TelrTransactionAuthorised $event): void
+    public function __construct(private \App\Services\OrderPaymentReconciliation $payments) {}
+
+    public function handle(
+        \yacoubalhaidari\Telr\Events\TelrTransactionAuthorised|\yacoubalhaidari\Telr\Events\TelrTransactionDeclined $event,
+    ): void
     {
-        $tx = $event->transaction; // TransactionWebhookDTO
-        Order::where('cart_id', $tx->cartId)->update(['status' => 'paid']);
+        $this->payments->reconcile($event->transaction->cartId);
     }
 }
 ```
+
+`OrderPaymentReconciliation` above is an application service you implement.
+It should resolve the stored checkout by cart ID and use
+`Telr::checkOrderStatus($savedOrderReference)` to verify the reference, cart,
+amount, currency, and environment before changing local state. Only
+`OrderStatus::PAID` confirms capture; an authorised event can represent a hold.
+Use a transaction and idempotent updates so repeated advice cannot deliver an
+order twice. Configure either automatic event discovery or explicit listener
+registration for this listener, avoiding duplicate registration.
 
 ### 6. Service API (reporting / reconciliation)
 
@@ -217,6 +244,16 @@ $accounts = Telr::serviceApi()->accounts(); // JSON, unlike every other Service 
 composer install
 composer test
 ```
+
+The suite uses fake HTTP requests and does not call a payment gateway. It covers
+all DTO classes, provider/container bindings, the facade, hosted checkout,
+QuickLinks, invoice XML, and authenticated webhook events. The GitHub Actions
+matrix runs the supported Laravel 10–13 environments using Testbench 8–11.
+
+For Laravel 13 specifically, use PHP 8.3+ and Testbench 11; the included PHP 8.4
+CI job uses PHPUnit 13. Composer selects a compatible PHPUnit version on older
+PHP versions. No application-level patches or edits inside `vendor` are needed
+when installing this corrected package version.
 
 ## License
 

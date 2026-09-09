@@ -49,7 +49,13 @@ class SignatureGenerator
 
     public function verifyTransaction(array $payload): bool
     {
-        return $this->compare($payload, self::TRAN_FIELDS, $payload['tran_check'] ?? null);
+        $fields = self::TRAN_FIELDS;
+        // Telr inserts this field only when the merchant enables its order reference.
+        if (array_key_exists('tran_order', $payload)) {
+            array_splice($fields, array_search('tran_currency', $fields, true), 0, ['tran_order']);
+        }
+
+        return $this->compare($payload, $fields, $payload['tran_check'] ?? null);
     }
 
     public function verifyCard(array $payload): bool
@@ -64,6 +70,10 @@ class SignatureGenerator
 
     public function verifyAgreement(array $payload): bool
     {
+        if (isset($payload['action']) && ! is_scalar($payload['action'])) {
+            return false;
+        }
+
         $action = strtoupper((string) ($payload['action'] ?? ''));
         $fields = self::AGREEMENT_FIELDS[$action] ?? null;
 
@@ -88,16 +98,30 @@ class SignatureGenerator
         $parts = [$this->secretKey];
 
         foreach ($fields as $field) {
-            $parts[] = urldecode(trim((string) ($payload[$field] ?? '')));
+            $value = $payload[$field] ?? '';
+            if (! is_scalar($value)) {
+                throw new \InvalidArgumentException('Signature fields must be scalar values.');
+            }
+
+            // Request input is already form-decoded by PHP/Laravel. Decoding a
+            // second time corrupts literal plus signs and percent sequences.
+            $parts[] = trim((string) $value);
         }
 
         return sha1(implode(':', $parts));
     }
 
-    protected function compare(array $payload, array $fields, ?string $expectedHash): bool
+    protected function compare(array $payload, array $fields, mixed $expectedHash): bool
     {
-        if (!$expectedHash) {
+        if ($this->secretKey === '' || ! is_string($expectedHash)
+            || ! preg_match('/^[a-f0-9]{40}$/iD', $expectedHash)) {
             return false;
+        }
+
+        foreach ($fields as $field) {
+            if (! is_scalar($payload[$field] ?? '')) {
+                return false;
+            }
         }
 
         $computed = $this->sign($payload, $fields);

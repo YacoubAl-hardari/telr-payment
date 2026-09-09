@@ -2,7 +2,7 @@
 
 namespace yacoubalhaidari\Telr\DTOs\QuickLink;
 
-use yacoubalhaidari\Telr\DTOs\BaseDTO;
+use yacoubalhaidari\Telr\DTOs\AuthenticatedRequestDTO;
 use yacoubalhaidari\Telr\Exceptions\TelrValidationException;
 
 /**
@@ -12,7 +12,7 @@ use yacoubalhaidari\Telr\Exceptions\TelrValidationException;
  * @param  SplitDTO[]  $splits  Percentages across all entries must sum to <= 100%.
  * @param  array<string,string>  $extra  Maximum 7 key/value pairs.
  */
-final class CreateQuickLinkDTO extends BaseDTO
+final class CreateQuickLinkDTO extends AuthenticatedRequestDTO
 {
     public function __construct(
         public readonly QuickLinkDetailsDTO $details,

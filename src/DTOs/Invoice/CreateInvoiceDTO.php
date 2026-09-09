@@ -2,7 +2,7 @@
 
 namespace yacoubalhaidari\Telr\DTOs\Invoice;
 
-use yacoubalhaidari\Telr\DTOs\BaseDTO;
+use yacoubalhaidari\Telr\DTOs\AuthenticatedRequestDTO;
 use yacoubalhaidari\Telr\Enums\Currency;
 use yacoubalhaidari\Telr\Enums\InvoiceLayout;
 use yacoubalhaidari\Telr\Exceptions\TelrValidationException;
@@ -17,7 +17,7 @@ use yacoubalhaidari\Telr\Exceptions\TelrValidationException;
  *
  * @param  array<string,string>  $extra  Maximum 7 key/value pairs.
  */
-final class CreateInvoiceDTO extends BaseDTO
+final class CreateInvoiceDTO extends AuthenticatedRequestDTO
 {
     public function __construct(
         public readonly string $title,

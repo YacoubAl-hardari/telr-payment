@@ -1,0 +1,42 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: '8.1'
+            testbench: '^8.0'
+            phpunit: '^10.5'
+          - php: '8.2'
+            testbench: '^9.0'
+            phpunit: '^11.5'
+          - php: '8.2'
+            testbench: '^10.0'
+            phpunit: '^11.5'
+          - php: '8.4'
+            testbench: '^11.0'
+            phpunit: '^13.0'
+    name: PHP ${{ matrix.php }} / Testbench ${{ matrix.testbench }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: json, simplexml, dom, mbstring, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+      - name: Select framework test environment
+        run: composer require --dev "orchestra/testbench:${{ matrix.testbench }}" "phpunit/phpunit:${{ matrix.phpunit }}" --no-update --no-interaction
+      - run: composer update --prefer-dist --no-interaction --no-progress
+      - run: composer validate --strict
+      - run: composer test

@@ -2,7 +2,7 @@
 
 namespace yacoubalhaidari\Telr\DTOs\Order;
 
-use yacoubalhaidari\Telr\DTOs\BaseDTO;
+use yacoubalhaidari\Telr\DTOs\AuthenticatedRequestDTO;
 use yacoubalhaidari\Telr\Enums\FramedMode;
 use yacoubalhaidari\Telr\Exceptions\TelrValidationException;
 
@@ -10,7 +10,7 @@ use yacoubalhaidari\Telr\Exceptions\TelrValidationException;
  * Maps directly to the order.json "create" request body documented on the
  * "Create session" page.
  */
-final class CreateOrderDTO extends BaseDTO
+final class CreateOrderDTO extends AuthenticatedRequestDTO
 {
     /**
      * @param  WebhookUrlDTO[]  $webhooks  Maximum 2 allowed.
